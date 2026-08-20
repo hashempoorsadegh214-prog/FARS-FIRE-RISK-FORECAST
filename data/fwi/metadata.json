@@ -5,7 +5,12 @@
   "forecast_type": "1 day forecast",
   "forecast_date": "2026-08-21",
   "boundary": "fars.geojson",
-  "bbox": "50.0,27.0,54.5,31.5",
+  "bbox": {
+    "west": 49.85685878964651,
+    "south": 26.35238074036394,
+    "east": 56.32500281028652,
+    "north": 32.36284285982518
+  },
   "output": "fwi_2026-08-21.png",
-  "generated_at_utc": "2026-08-20T11:46:35.392630+00:00"
+  "generated_at_utc": "2026-08-20T11:50:49.707410+00:00"
 }
