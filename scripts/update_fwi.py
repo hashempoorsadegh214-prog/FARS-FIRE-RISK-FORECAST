@@ -16,19 +16,17 @@ OUTPUT_DIR = "data/fwi"
 WMS_URL = "https://maps.effis.emergency.copernicus.eu/gwis"
 LAYER = "ecmwf.fwi"
 
-WEST = 50.0
-SOUTH = 27.0
-EAST = 54.5
-NORTH = 31.5
-
 WIDTH = 1000
 HEIGHT = 700
 
 MAX_RETRIES = 5
 
+# مقدار حاشیه اطراف مرز فارس
+PADDING = 0.15
+
 
 # ============================================================
-# خواندن مرز فارس
+# خواندن Boundary فارس
 # ============================================================
 
 def load_fars_boundary():
@@ -108,20 +106,112 @@ def get_polygons(geojson_data):
 
 
 # ============================================================
-# تبدیل مختصات به پیکسل
+# محاسبه محدوده واقعی فارس
 # ============================================================
 
-def geo_to_pixel(lon, lat):
+def calculate_bbox(polygons):
+
+    min_lon = float("inf")
+    max_lon = float("-inf")
+    min_lat = float("inf")
+    max_lat = float("-inf")
+
+    for polygon in polygons:
+
+        for ring in polygon:
+
+            for point in ring:
+
+                lon = float(point[0])
+                lat = float(point[1])
+
+                min_lon = min(
+                    min_lon,
+                    lon
+                )
+
+                max_lon = max(
+                    max_lon,
+                    lon
+                )
+
+                min_lat = min(
+                    min_lat,
+                    lat
+                )
+
+                max_lat = max(
+                    max_lat,
+                    lat
+                )
+
+    if (
+        min_lon == float("inf")
+        or min_lat == float("inf")
+    ):
+        raise ValueError(
+            "Could not calculate Fars bounding box."
+        )
+
+    width = max_lon - min_lon
+    height = max_lat - min_lat
+
+    min_lon -= width * PADDING
+    max_lon += width * PADDING
+
+    min_lat -= height * PADDING
+    max_lat += height * PADDING
+
+    print("")
+    print("=" * 70)
+    print("Calculated Fars BBOX")
+    print("=" * 70)
+
+    print(
+        f"West  : {min_lon}"
+    )
+
+    print(
+        f"South : {min_lat}"
+    )
+
+    print(
+        f"East  : {max_lon}"
+    )
+
+    print(
+        f"North : {max_lat}"
+    )
+
+    return (
+        min_lon,
+        min_lat,
+        max_lon,
+        max_lat
+    )
+
+
+# ============================================================
+# تبدیل مختصات جغرافیایی به پیکسل
+# ============================================================
+
+def geo_to_pixel(
+    lon,
+    lat,
+    bbox
+):
+
+    west, south, east, north = bbox
 
     x = (
-        (lon - WEST)
-        / (EAST - WEST)
+        (lon - west)
+        / (east - west)
         * (WIDTH - 1)
     )
 
     y = (
-        (NORTH - lat)
-        / (NORTH - SOUTH)
+        (north - lat)
+        / (north - south)
         * (HEIGHT - 1)
     )
 
@@ -135,7 +225,10 @@ def geo_to_pixel(lon, lat):
 # ساخت ماسک فارس
 # ============================================================
 
-def create_fars_mask(polygons):
+def create_fars_mask(
+    polygons,
+    bbox
+):
 
     mask = Image.new(
         "L",
@@ -143,20 +236,23 @@ def create_fars_mask(polygons):
         0
     )
 
-    draw = ImageDraw.Draw(mask)
+    draw = ImageDraw.Draw(
+        mask
+    )
 
     for polygon in polygons:
 
         if not polygon:
             continue
 
-        # حلقه بیرونی
+        # حلقه خارجی
         outer_ring = polygon[0]
 
         outer_pixels = [
             geo_to_pixel(
                 point[0],
-                point[1]
+                point[1],
+                bbox
             )
             for point in outer_ring
         ]
@@ -168,13 +264,14 @@ def create_fars_mask(polygons):
                 fill=255
             )
 
-        # حفره های داخلی
+        # سوراخ های داخلی
         for hole in polygon[1:]:
 
             hole_pixels = [
                 geo_to_pixel(
                     point[0],
-                    point[1]
+                    point[1],
+                    bbox
                 )
                 for point in hole
             ]
@@ -193,10 +290,15 @@ def create_fars_mask(polygons):
 # ساخت URL WMS
 # ============================================================
 
-def build_wms_url(date_str):
+def build_wms_url(
+    date_str,
+    bbox
+):
 
-    bbox = (
-        f"{WEST},{SOUTH},{EAST},{NORTH}"
+    west, south, east, north = bbox
+
+    bbox_text = (
+        f"{west},{south},{east},{north}"
     )
 
     return (
@@ -210,7 +312,7 @@ def build_wms_url(date_str):
         f"&REQUEST=GetMap"
         f"&STYLES="
         f"&SRS=EPSG:4326"
-        f"&BBOX={bbox}"
+        f"&BBOX={bbox_text}"
         f"&WIDTH={WIDTH}"
         f"&HEIGHT={HEIGHT}"
         f"&TIME={date_str}"
@@ -223,11 +325,13 @@ def build_wms_url(date_str):
 
 def download_fwi(
     date_str,
-    output_file
+    output_file,
+    bbox
 ):
 
     url = build_wms_url(
-        date_str
+        date_str,
+        bbox
     )
 
     temp_file = (
@@ -384,19 +488,20 @@ def download_fwi(
 
 
 # ============================================================
-# برش دقیق فارس و حذف فضای خالی اطراف آن
+# اعمال مرز فارس
 # ============================================================
 
-def clip_and_crop_to_fars(
+def apply_fars_boundary(
     input_file,
     output_file,
-    polygons
+    polygons,
+    bbox
 ):
 
     print("")
     print("=" * 70)
     print(
-        "Clipping and cropping to exact Fars boundary"
+        "Applying exact Fars boundary"
     )
     print("=" * 70)
 
@@ -405,10 +510,10 @@ def clip_and_crop_to_fars(
     ).convert("RGBA")
 
     mask = create_fars_mask(
-        polygons
+        polygons,
+        bbox
     )
 
-    # اعمال ماسک
     original_alpha = (
         image.getchannel("A")
     )
@@ -427,36 +532,18 @@ def clip_and_crop_to_fars(
         final_alpha
     )
 
-    # پیدا کردن دقیق محدوده غیرشفاف فارس
-    bbox = final_alpha.getbbox()
-
-    if bbox is None:
-
-        raise RuntimeError(
-            "Fars boundary produced an empty image."
-        )
-
-    print(
-        f"Crop bounds: {bbox}"
-    )
-
-    # حذف کامل فضای خالی اطراف فارس
-    cropped_image = image.crop(
-        bbox
-    )
-
-    cropped_image.save(
+    image.save(
         output_file,
         format="PNG",
         optimize=True
     )
 
     print(
-        f"Final cropped map: {output_file}"
+        f"Final map saved: {output_file}"
     )
 
     print(
-        f"Final image size: {cropped_image.size}"
+        f"Image size: {image.size}"
     )
 
 
@@ -488,7 +575,15 @@ def main():
     )
 
     # --------------------------------------------------------
-    # پوشه
+    # محاسبه BBOX دقیق
+    # --------------------------------------------------------
+
+    bbox = calculate_bbox(
+        polygons
+    )
+
+    # --------------------------------------------------------
+    # پوشه خروجی
     # --------------------------------------------------------
 
     os.makedirs(
@@ -514,7 +609,7 @@ def main():
     )
 
     # --------------------------------------------------------
-    # فایل ها
+    # فایل‌ها
     # --------------------------------------------------------
 
     raw_file = os.path.join(
@@ -533,17 +628,19 @@ def main():
 
     download_fwi(
         date_str,
-        raw_file
+        raw_file,
+        bbox
     )
 
     # --------------------------------------------------------
-    # برش و جمع کردن فضای خالی
+    # اعمال مرز
     # --------------------------------------------------------
 
-    clip_and_crop_to_fars(
+    apply_fars_boundary(
         raw_file,
         final_file,
-        polygons
+        polygons,
+        bbox
     )
 
     # --------------------------------------------------------
@@ -583,12 +680,12 @@ def main():
             FARS_FILE,
 
         "bbox":
-            (
-                f"{WEST},"
-                f"{SOUTH},"
-                f"{EAST},"
-                f"{NORTH}"
-            ),
+            {
+                "west": bbox[0],
+                "south": bbox[1],
+                "east": bbox[2],
+                "north": bbox[3]
+            },
 
         "output":
             f"fwi_{date_str}.png",
