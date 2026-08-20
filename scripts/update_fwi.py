@@ -16,7 +16,6 @@ OUTPUT_DIR = "data/fwi"
 WMS_URL = "https://maps.effis.emergency.copernicus.eu/gwis"
 LAYER = "ecmwf.fwi"
 
-# کادر پوشاننده استان فارس
 WEST = 50.0
 SOUTH = 27.0
 EAST = 54.5
@@ -29,16 +28,21 @@ MAX_RETRIES = 5
 
 
 # ============================================================
-# خواندن Boundary فارس
+# خواندن مرز فارس
 # ============================================================
 
 def load_fars_boundary():
+
     if not os.path.exists(FARS_FILE):
         raise FileNotFoundError(
             f"Boundary file not found: {FARS_FILE}"
         )
 
-    with open(FARS_FILE, "r", encoding="utf-8") as f:
+    with open(
+        FARS_FILE,
+        "r",
+        encoding="utf-8"
+    ) as f:
         data = json.load(f)
 
     if data.get("type") != "FeatureCollection":
@@ -53,13 +57,15 @@ def load_fars_boundary():
             "fars.geojson contains no features."
         )
 
-    print(f"Fars boundary loaded: {len(features)} feature(s)")
+    print(
+        f"Fars boundary loaded: {len(features)} feature(s)"
+    )
 
     return data
 
 
 # ============================================================
-# استخراج Polygon / MultiPolygon
+# استخراج Polygon ها
 # ============================================================
 
 def get_polygons(geojson_data):
@@ -77,24 +83,32 @@ def get_polygons(geojson_data):
         coordinates = geometry.get("coordinates")
 
         if geometry_type == "Polygon":
-            polygons.append(coordinates)
+
+            polygons.append(
+                coordinates
+            )
 
         elif geometry_type == "MultiPolygon":
+
             for polygon in coordinates:
-                polygons.append(polygon)
+                polygons.append(
+                    polygon
+                )
 
     if not polygons:
         raise ValueError(
             "No Polygon or MultiPolygon geometry found."
         )
 
-    print(f"Polygon parts found: {len(polygons)}")
+    print(
+        f"Polygon parts found: {len(polygons)}"
+    )
 
     return polygons
 
 
 # ============================================================
-# تبدیل طول و عرض جغرافیایی به پیکسل
+# تبدیل مختصات به پیکسل
 # ============================================================
 
 def geo_to_pixel(lon, lat):
@@ -118,7 +132,7 @@ def geo_to_pixel(lon, lat):
 
 
 # ============================================================
-# ساخت ماسک دقیق فارس
+# ساخت ماسک فارس
 # ============================================================
 
 def create_fars_mask(polygons):
@@ -136,7 +150,7 @@ def create_fars_mask(polygons):
         if not polygon:
             continue
 
-        # مرز خارجی
+        # حلقه بیرونی
         outer_ring = polygon[0]
 
         outer_pixels = [
@@ -148,12 +162,13 @@ def create_fars_mask(polygons):
         ]
 
         if len(outer_pixels) >= 3:
+
             draw.polygon(
                 outer_pixels,
                 fill=255
             )
 
-        # حفره‌های داخلی
+        # حفره های داخلی
         for hole in polygon[1:]:
 
             hole_pixels = [
@@ -165,6 +180,7 @@ def create_fars_mask(polygons):
             ]
 
             if len(hole_pixels) >= 3:
+
                 draw.polygon(
                     hole_pixels,
                     fill=0
@@ -174,7 +190,7 @@ def create_fars_mask(polygons):
 
 
 # ============================================================
-# ساخت URL سرویس FWI
+# ساخت URL WMS
 # ============================================================
 
 def build_wms_url(date_str):
@@ -202,52 +218,85 @@ def build_wms_url(date_str):
 
 
 # ============================================================
-# دانلود نقشه FWI
+# دانلود FWI
 # ============================================================
 
-def download_fwi(date_str, output_file):
+def download_fwi(
+    date_str,
+    output_file
+):
 
-    url = build_wms_url(date_str)
-    temp_file = output_file + ".part"
+    url = build_wms_url(
+        date_str
+    )
+
+    temp_file = (
+        output_file + ".part"
+    )
 
     print("")
     print("=" * 70)
-    print(f"Downloading FWI forecast: {date_str}")
+    print(
+        f"Downloading FWI forecast: {date_str}"
+    )
     print("=" * 70)
 
-    for attempt in range(1, MAX_RETRIES + 1):
+    for attempt in range(
+        1,
+        MAX_RETRIES + 1
+    ):
 
         print(
             f"Attempt {attempt}/{MAX_RETRIES}"
         )
 
-        if os.path.exists(temp_file):
-            os.remove(temp_file)
+        if os.path.exists(
+            temp_file
+        ):
+
+            try:
+                os.remove(
+                    temp_file
+                )
+            except Exception:
+                pass
 
         command = [
             "curl",
+
             "--fail",
             "--location",
             "--http1.1",
+
             "--silent",
             "--show-error",
+
             "--retry",
             "3",
+
             "--retry-delay",
             "5",
+
             "--retry-all-errors",
+
             "--connect-timeout",
             "30",
+
             "--max-time",
             "300",
+
             "--header",
             "Accept: image/png",
+
             "--header",
             "Accept-Encoding: identity",
+
             "--user-agent",
             "FARS-FIRE-RISK-FORECAST/1.0",
+
             "--output",
             temp_file,
+
             url,
         ]
 
@@ -260,17 +309,26 @@ def download_fwi(date_str, output_file):
 
         if result.returncode != 0:
 
-            print("curl error:")
-            print(result.stderr)
+            print(
+                "curl error:"
+            )
+
+            print(
+                result.stderr
+            )
 
             if attempt == MAX_RETRIES:
+
                 raise RuntimeError(
                     f"FWI download failed for {date_str}"
                 )
 
             continue
 
-        if not os.path.exists(temp_file):
+        if not os.path.exists(
+            temp_file
+        ):
+
             raise RuntimeError(
                 "Downloaded file was not created."
             )
@@ -285,36 +343,28 @@ def download_fwi(date_str, output_file):
 
         if file_size < 1000:
 
-            with open(
-                temp_file,
-                "rb"
-            ) as f:
-                response_preview = f.read(3000)
-
-            print(
-                response_preview.decode(
-                    "utf-8",
-                    errors="ignore"
-                )
-            )
-
             if attempt == MAX_RETRIES:
+
                 raise RuntimeError(
                     "EFFIS returned an invalid response."
                 )
 
             continue
 
-        # بررسی هدر PNG
+        # بررسی PNG
         with open(
             temp_file,
             "rb"
         ) as f:
+
             header = f.read(8)
 
-        if header != b"\x89PNG\r\n\x1a\n":
+        if header != (
+            b"\x89PNG\r\n\x1a\n"
+        ):
 
             if attempt == MAX_RETRIES:
+
                 raise RuntimeError(
                     "Downloaded file is not a valid PNG."
                 )
@@ -334,10 +384,10 @@ def download_fwi(date_str, output_file):
 
 
 # ============================================================
-# اعمال مرز واقعی فارس روی تصویر
+# برش دقیق فارس و حذف فضای خالی اطراف آن
 # ============================================================
 
-def clip_to_fars(
+def clip_and_crop_to_fars(
     input_file,
     output_file,
     polygons
@@ -345,24 +395,24 @@ def clip_to_fars(
 
     print("")
     print("=" * 70)
-    print("Applying exact Fars boundary")
+    print(
+        "Clipping and cropping to exact Fars boundary"
+    )
     print("=" * 70)
 
     image = Image.open(
         input_file
     ).convert("RGBA")
 
-    # ماسک دقیق فارس
     mask = create_fars_mask(
         polygons
     )
 
-    # آلفای فعلی تصویر
-    original_alpha = image.getchannel("A")
+    # اعمال ماسک
+    original_alpha = (
+        image.getchannel("A")
+    )
 
-    # آلفای نهایی:
-    # داخل فارس = تصویر
-    # خارج فارس = کاملاً شفاف
     final_alpha = Image.composite(
         original_alpha,
         Image.new(
@@ -377,14 +427,36 @@ def clip_to_fars(
         final_alpha
     )
 
-    image.save(
+    # پیدا کردن دقیق محدوده غیرشفاف فارس
+    bbox = final_alpha.getbbox()
+
+    if bbox is None:
+
+        raise RuntimeError(
+            "Fars boundary produced an empty image."
+        )
+
+    print(
+        f"Crop bounds: {bbox}"
+    )
+
+    # حذف کامل فضای خالی اطراف فارس
+    cropped_image = image.crop(
+        bbox
+    )
+
+    cropped_image.save(
         output_file,
         format="PNG",
         optimize=True
     )
 
     print(
-        f"Final Fars map created: {output_file}"
+        f"Final cropped map: {output_file}"
+    )
+
+    print(
+        f"Final image size: {cropped_image.size}"
     )
 
 
@@ -396,21 +468,27 @@ def main():
 
     print("")
     print("=" * 70)
-    print("FARS FIRE RISK - FWI ENGINE")
+    print(
+        "FARS FIRE RISK - FWI ENGINE"
+    )
     print("=" * 70)
 
     # --------------------------------------------------------
     # Boundary
     # --------------------------------------------------------
 
-    boundary = load_fars_boundary()
+    boundary = (
+        load_fars_boundary()
+    )
 
-    polygons = get_polygons(
-        boundary
+    polygons = (
+        get_polygons(
+            boundary
+        )
     )
 
     # --------------------------------------------------------
-    # پوشه خروجی
+    # پوشه
     # --------------------------------------------------------
 
     os.makedirs(
@@ -427,7 +505,8 @@ def main():
     ).date()
 
     forecast_date = (
-        today + timedelta(days=1)
+        today
+        + timedelta(days=1)
     )
 
     date_str = (
@@ -435,7 +514,7 @@ def main():
     )
 
     # --------------------------------------------------------
-    # فایل موقت و فایل نهایی
+    # فایل ها
     # --------------------------------------------------------
 
     raw_file = os.path.join(
@@ -458,10 +537,10 @@ def main():
     )
 
     # --------------------------------------------------------
-    # برش دقیق فارس
+    # برش و جمع کردن فضای خالی
     # --------------------------------------------------------
 
-    clip_to_fars(
+    clip_and_crop_to_fars(
         raw_file,
         final_file,
         polygons
@@ -471,31 +550,53 @@ def main():
     # حذف فایل خام
     # --------------------------------------------------------
 
-    if os.path.exists(raw_file):
-        os.remove(raw_file)
+    if os.path.exists(
+        raw_file
+    ):
+
+        os.remove(
+            raw_file
+        )
 
     # --------------------------------------------------------
     # Metadata
     # --------------------------------------------------------
 
     metadata = {
-        "source": "Copernicus EFFIS / GWIS",
-        "layer": LAYER,
-        "model": "ECMWF",
-        "forecast_type": "1 day forecast",
-        "forecast_date": date_str,
-        "boundary": FARS_FILE,
-        "bbox": (
-            f"{WEST},{SOUTH},{EAST},{NORTH}"
-        ),
-        "output": (
-            f"fwi_{date_str}.png"
-        ),
-        "generated_at_utc": (
+
+        "source":
+            "Copernicus EFFIS / GWIS",
+
+        "layer":
+            LAYER,
+
+        "model":
+            "ECMWF",
+
+        "forecast_type":
+            "1 day forecast",
+
+        "forecast_date":
+            date_str,
+
+        "boundary":
+            FARS_FILE,
+
+        "bbox":
+            (
+                f"{WEST},"
+                f"{SOUTH},"
+                f"{EAST},"
+                f"{NORTH}"
+            ),
+
+        "output":
+            f"fwi_{date_str}.png",
+
+        "generated_at_utc":
             datetime.now(
                 timezone.utc
             ).isoformat()
-        )
     }
 
     metadata_file = os.path.join(
@@ -518,14 +619,10 @@ def main():
 
     print("")
     print("=" * 70)
-    print("FWI PROCESS COMPLETED")
+    print(
+        "FWI PROCESS COMPLETED"
+    )
     print("=" * 70)
-    print(
-        f"Forecast date: {date_str}"
-    )
-    print(
-        f"Final output: {final_file}"
-    )
 
 
 if __name__ == "__main__":
