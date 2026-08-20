@@ -1,0 +1,57 @@
+{
+  "source": "Copernicus EFFIS / JRC WMS",
+  "service": "https://ies-ows.jrc.ec.europa.eu/effis",
+  "layer": "ecmwf007.fwi",
+  "model": "ECMWF",
+  "forecast_days": 9,
+  "resolution": "approximately 8 km",
+  "boundary": "fars.geojson",
+  "generated_at_utc": "2026-08-20T09:46:28.210966+00:00",
+  "files": [
+    {
+      "date": "2026-08-20",
+      "day_ahead": 0,
+      "file": "fwi_2026-08-20.tif"
+    },
+    {
+      "date": "2026-08-21",
+      "day_ahead": 1,
+      "file": "fwi_2026-08-21.tif"
+    },
+    {
+      "date": "2026-08-22",
+      "day_ahead": 2,
+      "file": "fwi_2026-08-22.tif"
+    },
+    {
+      "date": "2026-08-23",
+      "day_ahead": 3,
+      "file": "fwi_2026-08-23.tif"
+    },
+    {
+      "date": "2026-08-24",
+      "day_ahead": 4,
+      "file": "fwi_2026-08-24.tif"
+    },
+    {
+      "date": "2026-08-25",
+      "day_ahead": 5,
+      "file": "fwi_2026-08-25.tif"
+    },
+    {
+      "date": "2026-08-26",
+      "day_ahead": 6,
+      "file": "fwi_2026-08-26.tif"
+    },
+    {
+      "date": "2026-08-27",
+      "day_ahead": 7,
+      "file": "fwi_2026-08-27.tif"
+    },
+    {
+      "date": "2026-08-28",
+      "day_ahead": 8,
+      "file": "fwi_2026-08-28.tif"
+    }
+  ]
+}
