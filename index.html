@@ -7,9 +7,13 @@
     <title>پیش‌بینی خطر حریق فارس</title>
 
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             margin: 0;
-            background: #f4f6f8;
+            background: #eef1f4;
             font-family: Tahoma, Arial, sans-serif;
         }
 
@@ -17,27 +21,64 @@
             background: #e85d04;
             color: white;
             text-align: center;
-            padding: 18px;
+            padding: 18px 10px;
         }
 
-        h1 {
+        header h1 {
             margin: 0;
             font-size: 22px;
         }
 
-        .map {
-            width: 95%;
+        .container {
+            width: 100%;
             max-width: 1100px;
             margin: 20px auto;
-            background: white;
-            padding: 10px;
-            border-radius: 12px;
+            padding: 0 12px;
         }
 
-        img {
+        .card {
+            background: white;
+            border-radius: 14px;
+            padding: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .map-wrapper {
+            width: 100%;
+            background: #dfe3e7;
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .map-wrapper img {
             display: block;
             width: 100%;
             height: auto;
+            object-fit: contain;
+        }
+
+        @media (max-width: 700px) {
+            header h1 {
+                font-size: 18px;
+            }
+
+            .title {
+                font-size: 16px;
+            }
+
+            .card {
+                padding: 8px;
+            }
         }
     </style>
 </head>
@@ -48,11 +89,25 @@
     <h1>سامانه پیش‌بینی خطر حریق در عرصه‌های طبیعی استان فارس</h1>
 </header>
 
-<div class="map">
-    <img
-        src="data/fwi/fwi_2026-08-21.png?1"
-        alt="پیش‌بینی FWI فارس"
-    >
+<div class="container">
+
+    <div class="card">
+
+        <div class="title">
+            پیش‌بینی خطر حریق برای فردا
+        </div>
+
+        <div class="map-wrapper">
+
+            <img
+                src="data/fwi/fwi_2026-08-21.png?v=5"
+                alt="نقشه پیش‌بینی FWI استان فارس"
+            >
+
+        </div>
+
+    </div>
+
 </div>
 
 </body>
