@@ -11,27 +11,30 @@ from datetime import datetime, timedelta, timezone
 FARS_FILE = "fars.geojson"
 OUTPUT_DIR = "data/fwi"
 
-# سرویس قدیمی‌تر JRC که لایه ecmwf007.fwi روی آن ثبت شده
-WMS_URL = "https://ies-ows.jrc.ec.europa.eu/effis"
+WMS_URL = "https://maps.effis.emergency.copernicus.eu/gwis"
 
-LAYER = "ecmwf007.fwi"
+LAYER = "ecmwf.fwi"
 
 # محدوده پوشاننده استان فارس
 BBOX = "50.0,27.0,54.5,31.5"
 
-WIDTH = 800
-HEIGHT = 600
+# اندازه تصویر
+WIDTH = 1000
+HEIGHT = 700
 
+# تعداد روزهای پیش‌بینی
 FORECAST_DAYS = 9
 
+# تعداد تلاش مجدد
 MAX_RETRIES = 5
 
 
 # ============================================================
-# بررسی Boundary
+# بررسی Boundary فارس
 # ============================================================
 
 def check_fars_boundary():
+
     print("=" * 70)
     print("Checking Fars boundary")
     print("=" * 70)
@@ -46,11 +49,12 @@ def check_fars_boundary():
         "r",
         encoding="utf-8"
     ) as f:
+
         data = json.load(f)
 
     if data.get("type") != "FeatureCollection":
         raise ValueError(
-            "fars.geojson is not a valid FeatureCollection."
+            "fars.geojson is not a valid GeoJSON FeatureCollection."
         )
 
     features = data.get("features", [])
@@ -67,14 +71,14 @@ def check_fars_boundary():
 
 
 # ============================================================
-# ساخت URL
+# ساخت URL درخواست WMS
 # ============================================================
 
 def build_url(date_str):
 
     params = [
         ("LAYERS", LAYER),
-        ("FORMAT", "image/tiff"),
+        ("FORMAT", "image/png"),
         ("TRANSPARENT", "true"),
         ("SINGLETILE", "false"),
         ("SERVICE", "wms"),
@@ -97,7 +101,7 @@ def build_url(date_str):
 
 
 # ============================================================
-# دانلود FWI
+# دانلود نقشه FWI
 # ============================================================
 
 def download_fwi(date_str, output_file):
@@ -106,7 +110,7 @@ def download_fwi(date_str, output_file):
 
     print("")
     print("=" * 70)
-    print(f"Downloading FWI for {date_str}")
+    print(f"Downloading FWI map for {date_str}")
     print("=" * 70)
 
     temp_file = output_file + ".part"
@@ -125,25 +129,39 @@ def download_fwi(date_str, output_file):
 
         command = [
             "curl",
+
             "--fail",
             "--location",
+
             "--silent",
             "--show-error",
+
             "--retry",
             "3",
+
             "--retry-delay",
             "5",
+
             "--retry-all-errors",
+
             "--connect-timeout",
             "30",
+
             "--max-time",
             "300",
+
+            "--header",
+            "Accept: image/png",
+
             "--header",
             "Accept-Encoding: identity",
+
             "--user-agent",
             "FARS-FIRE-RISK-FORECAST/1.0",
+
             "--output",
             temp_file,
+
             url,
         ]
 
@@ -165,7 +183,7 @@ def download_fwi(date_str, output_file):
                     continue
 
                 raise RuntimeError(
-                    f"curl failed for {date_str}"
+                    f"Unable to download FWI map for {date_str}"
                 )
 
             if not os.path.exists(temp_file):
@@ -181,17 +199,17 @@ def download_fwi(date_str, output_file):
                 f"Downloaded bytes: {file_size}"
             )
 
+            # بررسی حجم فایل
             if file_size < 1000:
 
                 with open(
                     temp_file,
                     "rb"
                 ) as f:
+
                     preview = f.read(3000)
 
-                print(
-                    "Server response:"
-                )
+                print("Server response:")
 
                 print(
                     preview.decode(
@@ -205,26 +223,29 @@ def download_fwi(date_str, output_file):
                     "small response."
                 )
 
-            # بررسی TIFF
+            # بررسی PNG
             with open(
                 temp_file,
                 "rb"
             ) as f:
-                header = f.read(4)
 
-            if not (
-                header.startswith(b"II*\x00")
-                or header.startswith(b"MM\x00*")
-            ):
+                header = f.read(8)
+
+            png_signature = (
+                b"\x89PNG\r\n\x1a\n"
+            )
+
+            if header != png_signature:
 
                 with open(
                     temp_file,
                     "rb"
                 ) as f:
+
                     preview = f.read(3000)
 
                 print(
-                    "Response is not TIFF:"
+                    "Response is not PNG:"
                 )
 
                 print(
@@ -235,7 +256,7 @@ def download_fwi(date_str, output_file):
                 )
 
                 raise RuntimeError(
-                    "EFFIS response is not a valid TIFF."
+                    "EFFIS response is not a valid PNG."
                 )
 
             os.replace(
@@ -255,7 +276,16 @@ def download_fwi(date_str, output_file):
                 f"Attempt {attempt} failed:"
             )
 
-            print(str(e))
+            print(
+                str(e)
+            )
+
+            if os.path.exists(temp_file):
+
+                try:
+                    os.remove(temp_file)
+                except Exception:
+                    pass
 
             if attempt < MAX_RETRIES:
                 continue
@@ -271,38 +301,47 @@ def main():
 
     print("")
     print("=" * 70)
-    print("FARS FIRE RISK - FWI ENGINE")
+    print("FARS FIRE RISK - FWI FORECAST ENGINE")
     print("=" * 70)
 
+    # بررسی مرز فارس
     check_fars_boundary()
 
+    # ساخت پوشه خروجی
     os.makedirs(
         OUTPUT_DIR,
         exist_ok=True
     )
 
+    # تاریخ فعلی UTC
     today = datetime.now(
         timezone.utc
     ).date()
 
     files = []
 
+    # --------------------------------------------------------
+    # دریافت پیش‌بینی 9 روز آینده
+    # --------------------------------------------------------
+
     for day_ahead in range(
         FORECAST_DAYS
     ):
 
-        date = (
+        forecast_date = (
             today
             + timedelta(
                 days=day_ahead
             )
         )
 
-        date_str = date.isoformat()
+        date_str = (
+            forecast_date.isoformat()
+        )
 
         output_file = os.path.join(
             OUTPUT_DIR,
-            f"fwi_{date_str}.tif"
+            f"fwi_{date_str}.png"
         )
 
         download_fwi(
@@ -314,24 +353,47 @@ def main():
             {
                 "date": date_str,
                 "day_ahead": day_ahead,
-                "file": f"fwi_{date_str}.tif",
+                "file": f"fwi_{date_str}.png",
             }
         )
 
+    # --------------------------------------------------------
+    # ساخت metadata
+    # --------------------------------------------------------
+
     metadata = {
-        "source": "Copernicus EFFIS / JRC WMS",
-        "service": WMS_URL,
-        "layer": LAYER,
-        "model": "ECMWF",
-        "forecast_days": FORECAST_DAYS,
-        "resolution": "approximately 8 km",
-        "boundary": FARS_FILE,
-        "generated_at_utc": (
+
+        "source":
+            "Copernicus EFFIS / GWIS",
+
+        "service":
+            WMS_URL,
+
+        "layer":
+            LAYER,
+
+        "model":
+            "ECMWF",
+
+        "output":
+            "PNG map",
+
+        "forecast_days":
+            FORECAST_DAYS,
+
+        "boundary":
+            FARS_FILE,
+
+        "bbox":
+            BBOX,
+
+        "generated_at_utc":
             datetime.now(
                 timezone.utc
-            ).isoformat()
-        ),
-        "files": files,
+            ).isoformat(),
+
+        "files":
+            files,
     }
 
     metadata_file = os.path.join(
@@ -356,10 +418,23 @@ def main():
     print("=" * 70)
     print("FWI UPDATE COMPLETED SUCCESSFULLY")
     print("=" * 70)
+
     print(
-        f"Total files: {len(files)}"
+        f"Total forecast maps: {len(files)}"
     )
 
+    print(
+        f"Output directory: {OUTPUT_DIR}"
+    )
+
+    print(
+        f"Metadata: {metadata_file}"
+    )
+
+
+# ============================================================
+# شروع
+# ============================================================
 
 if __name__ == "__main__":
     main()
