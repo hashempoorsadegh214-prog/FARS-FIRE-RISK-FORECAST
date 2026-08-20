@@ -1,12 +1,11 @@
 {
   "source": "Copernicus EFFIS / GWIS",
-  "service": "https://maps.effis.emergency.copernicus.eu/gwis",
   "layer": "ecmwf.fwi",
   "model": "ECMWF",
   "forecast_type": "1 day forecast",
   "forecast_date": "2026-08-21",
-  "generated_at_utc": "2026-08-20T11:30:56.139085+00:00",
   "boundary": "fars.geojson",
   "bbox": "50.0,27.0,54.5,31.5",
-  "output": "fwi_2026-08-21.png"
+  "output": "fwi_2026-08-21.png",
+  "generated_at_utc": "2026-08-20T11:35:51.923704+00:00"
 }
