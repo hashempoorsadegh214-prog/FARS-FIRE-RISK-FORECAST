@@ -1,4 +1,4 @@
-name: Test FWI Forecast
+name: Update FWI Forecast
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ permissions:
   contents: write
 
 jobs:
-  test-fwi:
+  update-fwi:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,6 +24,25 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests
 
-      - name: Run FWI engine
+      - name: Download FWI forecast
         run: |
           python scripts/update_fwi.py
+
+      - name: Check generated files
+        run: |
+          echo "Generated files:"
+          find data/fwi -maxdepth 1 -type f -print
+
+      - name: Commit FWI data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add data/fwi
+
+          if git diff --cached --quiet; then
+            echo "No new FWI data to commit."
+          else
+            git commit -m "Update FWI forecast data"
+            git push
+          fi
