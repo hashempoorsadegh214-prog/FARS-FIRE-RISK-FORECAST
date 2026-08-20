@@ -2,10 +2,7 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>سامانه پیش‌بینی خطر حریق فارس</title>
 
@@ -75,15 +72,17 @@
 
         .panel-title {
             font-weight: bold;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            font-size: 16px;
         }
 
         .filter-item {
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin: 8px 0;
+            gap: 9px;
+            margin: 10px 0;
             font-size: 14px;
+            cursor: pointer;
         }
 
         .filter-item input {
@@ -103,7 +102,7 @@
             align-items: center;
             gap: 6px;
             background: white;
-            padding: 7px 9px;
+            padding: 7px 10px;
             border-radius: 7px;
             font-size: 13px;
         }
@@ -139,9 +138,11 @@
             background: #8e44ad;
         }
 
-        .loading {
+        #status {
+            margin-top: 10px;
+            padding: 8px;
             text-align: center;
-            padding: 15px;
+            font-size: 13px;
             color: #666;
         }
 
@@ -181,7 +182,10 @@
 
         <div id="map"></div>
 
+        <!-- ================================================= -->
         <!-- فیلترهای مکانی -->
+        <!-- ================================================= -->
+
         <div class="panel">
 
             <div class="panel-title">
@@ -193,7 +197,7 @@
                     type="checkbox"
                     id="huntingToggle"
                 >
-                مناطق شکار ممنوع
+                <span>مناطق شکار ممنوع</span>
             </label>
 
             <label class="filter-item">
@@ -201,12 +205,15 @@
                     type="checkbox"
                     id="protectedToggle"
                 >
-                مناطق چهارگانه
+                <span>مناطق چهارگانه</span>
             </label>
 
         </div>
 
-        <!-- راهنما -->
+        <!-- ================================================= -->
+        <!-- راهنمای FWI -->
+        <!-- ================================================= -->
+
         <div class="panel">
 
             <div class="panel-title">
@@ -249,11 +256,8 @@
 
         </div>
 
-        <div
-            id="loading"
-            class="loading"
-        >
-            در حال بارگذاری لایه‌ها...
+        <div id="status">
+            در حال بارگذاری لایه‌های مکانی...
         </div>
 
     </div>
@@ -267,12 +271,10 @@
 <script>
 
     // ========================================================
-    // ساخت نقشه
+    // نقشه اصلی
     // ========================================================
 
-    const map = L.map("map", {
-        zoomControl: true
-    });
+    const map = L.map("map");
 
     map.setView(
         [29.6, 52.5],
@@ -294,20 +296,15 @@
 
 
     // ========================================================
-    // لایه FWI
+    // تصویر FWI
     // ========================================================
 
-    const fwiUrl =
-        "data/fwi/fwi_2026-08-21.png?v=7";
-
-    const fwiBounds = [
-        [27.0, 50.0],
-        [31.5, 54.5]
-    ];
-
     const fwiLayer = L.imageOverlay(
-        fwiUrl,
-        fwiBounds,
+        "data/fwi/fwi_2026-08-21.png?v=10",
+        [
+            [27.0, 50.0],
+            [31.5, 54.5]
+        ],
         {
             opacity: 0.85,
             interactive: false
@@ -316,7 +313,7 @@
 
 
     // ========================================================
-    // متغیرهای لایه‌های مکانی
+    // لایه‌های مکانی
     // ========================================================
 
     let huntingLayer = null;
@@ -333,7 +330,7 @@
             color: "#8e44ad",
             weight: 2,
             fillColor: "#9b59b6",
-            fillOpacity: 0.18
+            fillOpacity: 0.20
         };
     }
 
@@ -348,24 +345,24 @@
             color: "#16a085",
             weight: 2,
             fillColor: "#1abc9c",
-            fillOpacity: 0.18
+            fillOpacity: 0.20
         };
     }
 
 
     // ========================================================
-    // بارگذاری مناطق شکار ممنوع
+    // بارگذاری شکار ممنوع
     // ========================================================
 
     async function loadHunting() {
 
         const response = await fetch(
-            "hunting_banned.geojson"
+            "hunting_banned.geojson?v=1"
         );
 
         if (!response.ok) {
             throw new Error(
-                "hunting_banned.geojson not found"
+                "hunting_banned.geojson پیدا نشد."
             );
         }
 
@@ -387,12 +384,12 @@
     async function loadProtected() {
 
         const response = await fetch(
-            "protected_areas.geojson"
+            "protected_areas.geojson?v=1"
         );
 
         if (!response.ok) {
             throw new Error(
-                "protected_areas.geojson not found"
+                "protected_areas.geojson پیدا نشد."
             );
         }
 
@@ -464,7 +461,7 @@
 
 
     // ========================================================
-    // بارگذاری همه داده‌ها
+    // بارگذاری لایه‌ها
     // ========================================================
 
     async function initializeMap() {
@@ -477,17 +474,18 @@
             ]);
 
             document
-                .getElementById("loading")
-                .style.display = "none";
+                .getElementById("status")
+                .textContent =
+                "لایه‌های مکانی آماده هستند.";
 
         } catch (error) {
 
             console.error(error);
 
             document
-                .getElementById("loading")
+                .getElementById("status")
                 .textContent =
-                "برخی لایه‌های مکانی در دسترس نیستند.";
+                error.message;
         }
     }
 
