@@ -11,9 +11,12 @@ from datetime import datetime, timedelta, timezone
 FARS_FILE = "fars.geojson"
 OUTPUT_DIR = "data/fwi"
 
-WMS_URL = "https://maps.effis.emergency.copernicus.eu/effis"
+# سرویس قدیمی‌تر JRC که لایه ecmwf007.fwi روی آن ثبت شده
+WMS_URL = "https://ies-ows.jrc.ec.europa.eu/effis"
+
 LAYER = "ecmwf007.fwi"
 
+# محدوده پوشاننده استان فارس
 BBOX = "50.0,27.0,54.5,31.5"
 
 WIDTH = 800
@@ -90,13 +93,11 @@ def build_url(date_str):
         for key, value in params
     )
 
-    return (
-        f"{WMS_URL}?{query}"
-    )
+    return f"{WMS_URL}?{query}"
 
 
 # ============================================================
-# دانلود با curl
+# دانلود FWI
 # ============================================================
 
 def download_fwi(date_str, output_file):
@@ -105,9 +106,7 @@ def download_fwi(date_str, output_file):
 
     print("")
     print("=" * 70)
-    print(
-        f"Downloading FWI for {date_str}"
-    )
+    print(f"Downloading FWI for {date_str}")
     print("=" * 70)
 
     temp_file = output_file + ".part"
@@ -130,35 +129,21 @@ def download_fwi(date_str, output_file):
             "--location",
             "--silent",
             "--show-error",
-
-            # تلاش مجدد در خطای شبکه
             "--retry",
             "3",
-
             "--retry-delay",
             "5",
-
             "--retry-all-errors",
-
-            # زمان اتصال
             "--connect-timeout",
             "30",
-
-            # زمان کل
             "--max-time",
             "300",
-
-            # جلوگیری از فشرده‌سازی
             "--header",
             "Accept-Encoding: identity",
-
-            # User-Agent
             "--user-agent",
             "FARS-FIRE-RISK-FORECAST/1.0",
-
             "--output",
             temp_file,
-
             url,
         ]
 
@@ -173,25 +158,17 @@ def download_fwi(date_str, output_file):
 
             if result.returncode != 0:
 
-                print(
-                    "curl error:"
-                )
-
-                print(
-                    result.stderr
-                )
+                print("curl error:")
+                print(result.stderr)
 
                 if attempt < MAX_RETRIES:
                     continue
 
                 raise RuntimeError(
-                    "curl could not download "
-                    f"FWI for {date_str}"
+                    f"curl failed for {date_str}"
                 )
 
-            if not os.path.exists(
-                temp_file
-            ):
+            if not os.path.exists(temp_file):
                 raise RuntimeError(
                     "Output file was not created."
                 )
@@ -224,8 +201,8 @@ def download_fwi(date_str, output_file):
                 )
 
                 raise RuntimeError(
-                    "EFFIS returned an "
-                    "unexpectedly small file."
+                    "EFFIS returned an unexpectedly "
+                    "small response."
                 )
 
             # بررسی TIFF
@@ -233,16 +210,11 @@ def download_fwi(date_str, output_file):
                 temp_file,
                 "rb"
             ) as f:
-
                 header = f.read(4)
 
             if not (
-                header.startswith(
-                    b"II*\x00"
-                )
-                or header.startswith(
-                    b"MM\x00*"
-                )
+                header.startswith(b"II*\x00")
+                or header.startswith(b"MM\x00*")
             ):
 
                 with open(
@@ -263,8 +235,7 @@ def download_fwi(date_str, output_file):
                 )
 
                 raise RuntimeError(
-                    "EFFIS response is "
-                    "not a valid TIFF."
+                    "EFFIS response is not a valid TIFF."
                 )
 
             os.replace(
@@ -273,8 +244,7 @@ def download_fwi(date_str, output_file):
             )
 
             print(
-                f"Saved successfully: "
-                f"{output_file}"
+                f"Saved successfully: {output_file}"
             )
 
             return
@@ -285,9 +255,7 @@ def download_fwi(date_str, output_file):
                 f"Attempt {attempt} failed:"
             )
 
-            print(
-                str(e)
-            )
+            print(str(e))
 
             if attempt < MAX_RETRIES:
                 continue
@@ -346,22 +314,17 @@ def main():
             {
                 "date": date_str,
                 "day_ahead": day_ahead,
-                "file": (
-                    f"fwi_{date_str}.tif"
-                ),
+                "file": f"fwi_{date_str}.tif",
             }
         )
 
     metadata = {
-        "source": (
-            "Copernicus EFFIS"
-        ),
+        "source": "Copernicus EFFIS / JRC WMS",
+        "service": WMS_URL,
         "layer": LAYER,
         "model": "ECMWF",
         "forecast_days": FORECAST_DAYS,
-        "resolution": (
-            "approximately 8 km"
-        ),
+        "resolution": "approximately 8 km",
         "boundary": FARS_FILE,
         "generated_at_utc": (
             datetime.now(
@@ -391,11 +354,8 @@ def main():
 
     print("")
     print("=" * 70)
-    print(
-        "FWI UPDATE COMPLETED"
-    )
+    print("FWI UPDATE COMPLETED SUCCESSFULLY")
     print("=" * 70)
-
     print(
         f"Total files: {len(files)}"
     )
