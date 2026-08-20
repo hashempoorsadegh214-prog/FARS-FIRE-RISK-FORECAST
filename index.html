@@ -147,7 +147,6 @@
         }
 
         @media (max-width: 700px) {
-
             header h1 {
                 font-size: 18px;
             }
@@ -182,10 +181,6 @@
 
         <div id="map"></div>
 
-        <!-- ================================================= -->
-        <!-- فیلترهای مکانی -->
-        <!-- ================================================= -->
-
         <div class="panel">
 
             <div class="panel-title">
@@ -209,10 +204,6 @@
             </label>
 
         </div>
-
-        <!-- ================================================= -->
-        <!-- راهنمای FWI -->
-        <!-- ================================================= -->
 
         <div class="panel">
 
@@ -257,16 +248,14 @@
         </div>
 
         <div id="status">
-            در حال بارگذاری لایه‌های مکانی...
+            در حال بارگذاری نقشه...
         </div>
 
     </div>
 
 </div>
 
-<script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
-</script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
 
@@ -296,33 +285,12 @@
 
 
     // ========================================================
-    // تصویر FWI
-    // ========================================================
-
-    const fwiLayer = L.imageOverlay(
-        "data/fwi/fwi_2026-08-21.png?v=10",
-        [
-            [27.0, 50.0],
-            [31.5, 54.5]
-        ],
-        {
-            opacity: 0.85,
-            interactive: false
-        }
-    ).addTo(map);
-
-
-    // ========================================================
     // لایه‌های مکانی
     // ========================================================
 
     let huntingLayer = null;
     let protectedLayer = null;
 
-
-    // ========================================================
-    // استایل مناطق شکار ممنوع
-    // ========================================================
 
     function huntingStyle() {
 
@@ -335,10 +303,6 @@
     }
 
 
-    // ========================================================
-    // استایل مناطق چهارگانه
-    // ========================================================
-
     function protectedStyle() {
 
         return {
@@ -350,19 +314,15 @@
     }
 
 
-    // ========================================================
-    // بارگذاری شکار ممنوع
-    // ========================================================
-
     async function loadHunting() {
 
         const response = await fetch(
-            "hunting_banned.geojson?v=1"
+            "hunting_banned.geojson?v=2"
         );
 
         if (!response.ok) {
             throw new Error(
-                "hunting_banned.geojson پیدا نشد."
+                "فایل مناطق شکار ممنوع پیدا نشد."
             );
         }
 
@@ -377,19 +337,15 @@
     }
 
 
-    // ========================================================
-    // بارگذاری مناطق چهارگانه
-    // ========================================================
-
     async function loadProtected() {
 
         const response = await fetch(
-            "protected_areas.geojson?v=1"
+            "protected_areas.geojson?v=2"
         );
 
         if (!response.ok) {
             throw new Error(
-                "protected_areas.geojson پیدا نشد."
+                "فایل مناطق چهارگانه پیدا نشد."
             );
         }
 
@@ -419,11 +375,8 @@
                 }
 
                 if (this.checked) {
-
                     huntingLayer.addTo(map);
-
                 } else {
-
                     map.removeLayer(
                         huntingLayer
                     );
@@ -447,11 +400,8 @@
                 }
 
                 if (this.checked) {
-
                     protectedLayer.addTo(map);
-
                 } else {
-
                     map.removeLayer(
                         protectedLayer
                     );
@@ -461,12 +411,78 @@
 
 
     // ========================================================
-    // بارگذاری لایه‌ها
+    // بارگذاری FWI با BBOX واقعی
+    // ========================================================
+
+    async function loadFWI() {
+
+        const metadataResponse = await fetch(
+            "data/fwi/metadata.json?v=2"
+        );
+
+        if (!metadataResponse.ok) {
+            throw new Error(
+                "metadata.json پیدا نشد."
+            );
+        }
+
+        const metadata =
+            await metadataResponse.json();
+
+        const bbox = metadata.bbox;
+
+        const bounds = [
+            [
+                bbox.south,
+                bbox.west
+            ],
+            [
+                bbox.north,
+                bbox.east
+            ]
+        ];
+
+        const imageUrl =
+            "data/fwi/" +
+            metadata.output +
+            "?v=2";
+
+        const fwiLayer =
+            L.imageOverlay(
+                imageUrl,
+                bounds,
+                {
+                    opacity: 0.85,
+                    interactive: false
+                }
+            );
+
+        fwiLayer.addTo(map);
+
+        // نقشه را با محدوده واقعی FWI هماهنگ می‌کنیم
+        map.fitBounds(
+            bounds,
+            {
+                padding: [
+                    20,
+                    20
+                ]
+            }
+        );
+
+        return fwiLayer;
+    }
+
+
+    // ========================================================
+    // شروع
     // ========================================================
 
     async function initializeMap() {
 
         try {
+
+            await loadFWI();
 
             await Promise.all([
                 loadHunting(),
@@ -476,7 +492,7 @@
             document
                 .getElementById("status")
                 .textContent =
-                "لایه‌های مکانی آماده هستند.";
+                "نقشه و لایه‌های مکانی آماده هستند.";
 
         } catch (error) {
 
