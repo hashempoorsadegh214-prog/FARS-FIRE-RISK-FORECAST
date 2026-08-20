@@ -12,20 +12,15 @@ FARS_FILE = "fars.geojson"
 OUTPUT_DIR = "data/fwi"
 
 WMS_URL = "https://maps.effis.emergency.copernicus.eu/gwis"
-
 LAYER = "ecmwf.fwi"
 
 # محدوده پوشاننده استان فارس
 BBOX = "50.0,27.0,54.5,31.5"
 
-# اندازه تصویر
 WIDTH = 1000
 HEIGHT = 700
 
-# تعداد روزهای پیش‌بینی
 FORECAST_DAYS = 9
-
-# تعداد تلاش مجدد
 MAX_RETRIES = 5
 
 
@@ -49,7 +44,6 @@ def check_fars_boundary():
         "r",
         encoding="utf-8"
     ) as f:
-
         data = json.load(f)
 
     if data.get("type") != "FeatureCollection":
@@ -71,7 +65,7 @@ def check_fars_boundary():
 
 
 # ============================================================
-# ساخت URL درخواست WMS
+# ساخت URL
 # ============================================================
 
 def build_url(date_str):
@@ -133,6 +127,10 @@ def download_fwi(date_str, output_file):
             "--fail",
             "--location",
 
+            # بسیار مهم:
+            # جلوگیری از خطاهای HTTP/2
+            "--http1.1",
+
             "--silent",
             "--show-error",
 
@@ -176,6 +174,7 @@ def download_fwi(date_str, output_file):
 
             if result.returncode != 0:
 
+                print("")
                 print("curl error:")
                 print(result.stderr)
 
@@ -199,17 +198,18 @@ def download_fwi(date_str, output_file):
                 f"Downloaded bytes: {file_size}"
             )
 
-            # بررسی حجم فایل
+            # بررسی حداقل اندازه
             if file_size < 1000:
 
                 with open(
                     temp_file,
                     "rb"
                 ) as f:
-
                     preview = f.read(3000)
 
-                print("Server response:")
+                print(
+                    "Server response:"
+                )
 
                 print(
                     preview.decode(
@@ -228,7 +228,6 @@ def download_fwi(date_str, output_file):
                 temp_file,
                 "rb"
             ) as f:
-
                 header = f.read(8)
 
             png_signature = (
@@ -241,7 +240,6 @@ def download_fwi(date_str, output_file):
                     temp_file,
                     "rb"
                 ) as f:
-
                     preview = f.read(3000)
 
                 print(
@@ -272,22 +270,24 @@ def download_fwi(date_str, output_file):
 
         except Exception as e:
 
+            print("")
             print(
                 f"Attempt {attempt} failed:"
             )
-
             print(
                 str(e)
             )
 
             if os.path.exists(temp_file):
-
                 try:
                     os.remove(temp_file)
                 except Exception:
                     pass
 
             if attempt < MAX_RETRIES:
+                print(
+                    "Retrying..."
+                )
                 continue
 
             raise
@@ -304,25 +304,18 @@ def main():
     print("FARS FIRE RISK - FWI FORECAST ENGINE")
     print("=" * 70)
 
-    # بررسی مرز فارس
     check_fars_boundary()
 
-    # ساخت پوشه خروجی
     os.makedirs(
         OUTPUT_DIR,
         exist_ok=True
     )
 
-    # تاریخ فعلی UTC
     today = datetime.now(
         timezone.utc
     ).date()
 
     files = []
-
-    # --------------------------------------------------------
-    # دریافت پیش‌بینی 9 روز آینده
-    # --------------------------------------------------------
 
     for day_ahead in range(
         FORECAST_DAYS
@@ -353,13 +346,11 @@ def main():
             {
                 "date": date_str,
                 "day_ahead": day_ahead,
-                "file": f"fwi_{date_str}.png",
+                "file": (
+                    f"fwi_{date_str}.png"
+                ),
             }
         )
-
-    # --------------------------------------------------------
-    # ساخت metadata
-    # --------------------------------------------------------
 
     metadata = {
 
@@ -423,18 +414,6 @@ def main():
         f"Total forecast maps: {len(files)}"
     )
 
-    print(
-        f"Output directory: {OUTPUT_DIR}"
-    )
-
-    print(
-        f"Metadata: {metadata_file}"
-    )
-
-
-# ============================================================
-# شروع
-# ============================================================
 
 if __name__ == "__main__":
     main()
