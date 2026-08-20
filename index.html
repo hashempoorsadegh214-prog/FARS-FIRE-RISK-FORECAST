@@ -4,76 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>پیش‌بینی خطر حریق استان فارس</title>
+    <title>پیش‌بینی خطر حریق فارس</title>
 
     <style>
-        * {
-            box-sizing: border-box;
-        }
-
         body {
             margin: 0;
-            font-family: Tahoma, Arial, sans-serif;
             background: #f4f6f8;
-            color: #222;
+            font-family: Tahoma, Arial, sans-serif;
         }
 
         header {
             background: #e85d04;
             color: white;
-            padding: 18px 15px;
             text-align: center;
+            padding: 18px;
         }
 
-        header h1 {
+        h1 {
             margin: 0;
-            font-size: 24px;
+            font-size: 22px;
         }
 
-        .container {
+        .map {
+            width: 95%;
             max-width: 1100px;
             margin: 20px auto;
-            padding: 0 12px;
-        }
-
-        .card {
             background: white;
+            padding: 10px;
             border-radius: 12px;
-            padding: 16px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
         }
 
-        .date {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 12px;
-        }
-
-        .map-box {
-            width: 100%;
-            background: #e9ecef;
-            border-radius: 10px;
-            overflow: hidden;
-            text-align: center;
-            min-height: 300px;
-        }
-
-        #fwi-map {
+        img {
+            display: block;
             width: 100%;
             height: auto;
-            display: block;
-            margin: 0 auto;
-        }
-
-        #loading {
-            padding: 50px 20px;
-            color: #666;
-        }
-
-        #error {
-            display: none;
-            padding: 50px 20px;
-            color: #b00020;
         }
     </style>
 </head>
@@ -84,53 +48,12 @@
     <h1>سامانه پیش‌بینی خطر حریق در عرصه‌های طبیعی استان فارس</h1>
 </header>
 
-<div class="container">
-
-    <div class="card">
-
-        <div class="date">
-            پیش‌بینی خطر حریق برای فردا — ۲۱ اوت ۲۰۲۶
-        </div>
-
-        <div class="map-box">
-
-            <div id="loading">
-                در حال دریافت نقشه پیش‌بینی FWI...
-            </div>
-
-            <img
-                id="fwi-map"
-                src="https://hashempoorsadegh214-prog.github.io/FARS-FIRE-RISK-FORECAST/data/fwi/fwi_2026-08-21.png?v=20260820-2"
-                alt="نقشه پیش‌بینی FWI استان فارس"
-                style="display:none;"
-            >
-
-            <div id="error">
-                نقشه FWI در دسترس نیست.
-            </div>
-
-        </div>
-
-    </div>
-
+<div class="map">
+    <img
+        src="data/fwi/fwi_2026-08-21.png?1"
+        alt="پیش‌بینی FWI فارس"
+    >
 </div>
-
-<script>
-    const map = document.getElementById("fwi-map");
-    const loading = document.getElementById("loading");
-    const error = document.getElementById("error");
-
-    map.onload = function () {
-        loading.style.display = "none";
-        map.style.display = "block";
-    };
-
-    map.onerror = function () {
-        loading.style.display = "none";
-        map.style.display = "none";
-        error.style.display = "block";
-    };
-</script>
 
 </body>
 </html>
