@@ -145,21 +145,6 @@
             font-size: 13px;
             color: #666;
         }
-
-        @media (max-width: 700px) {
-            header h1 {
-                font-size: 18px;
-            }
-
-            #map {
-                height: 500px;
-            }
-
-            .legend-items {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-            }
-        }
     </style>
 </head>
 
@@ -259,21 +244,12 @@
 
 <script>
 
-    // ========================================================
-    // نقشه اصلی
-    // ========================================================
-
     const map = L.map("map");
 
     map.setView(
         [29.6, 52.5],
         7
     );
-
-
-    // ========================================================
-    // نقشه پایه
-    // ========================================================
 
     L.tileLayer(
         "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -284,16 +260,11 @@
     ).addTo(map);
 
 
-    // ========================================================
-    // لایه‌های مکانی
-    // ========================================================
-
     let huntingLayer = null;
     let protectedLayer = null;
 
 
     function huntingStyle() {
-
         return {
             color: "#8e44ad",
             weight: 2,
@@ -304,7 +275,6 @@
 
 
     function protectedStyle() {
-
         return {
             color: "#16a085",
             weight: 2,
@@ -314,15 +284,71 @@
     }
 
 
-    async function loadHunting() {
+    async function loadFWI() {
 
         const response = await fetch(
-            "hunting_banned.geojson?v=2"
+            "data/fwi/metadata.json?v=" + Date.now()
         );
 
         if (!response.ok) {
             throw new Error(
-                "فایل مناطق شکار ممنوع پیدا نشد."
+                "metadata.json پیدا نشد."
+            );
+        }
+
+        const metadata = await response.json();
+
+        const bbox = metadata.bbox;
+
+        const bounds = [
+            [
+                bbox.south,
+                bbox.west
+            ],
+            [
+                bbox.north,
+                bbox.east
+            ]
+        ];
+
+        const imageUrl =
+            "data/fwi/" +
+            metadata.output +
+            "?v=" +
+            Date.now();
+
+        const imageLayer = L.imageOverlay(
+            imageUrl,
+            bounds,
+            {
+                opacity: 0.85,
+                interactive: false
+            }
+        ).addTo(map);
+
+        imageLayer.on(
+            "load",
+            function () {
+                map.fitBounds(
+                    bounds,
+                    {
+                        padding: [20, 20]
+                    }
+                );
+            }
+        );
+    }
+
+
+    async function loadHunting() {
+
+        const response = await fetch(
+            "hunting_banned.geojson?v=" + Date.now()
+        );
+
+        if (!response.ok) {
+            throw new Error(
+                "hunting_banned.geojson پیدا نشد."
             );
         }
 
@@ -340,12 +366,12 @@
     async function loadProtected() {
 
         const response = await fetch(
-            "protected_areas.geojson?v=2"
+            "protected_areas.geojson?v=" + Date.now()
         );
 
         if (!response.ok) {
             throw new Error(
-                "فایل مناطق چهارگانه پیدا نشد."
+                "protected_areas.geojson پیدا نشد."
             );
         }
 
@@ -359,10 +385,6 @@
         );
     }
 
-
-    // ========================================================
-    // فیلتر شکار ممنوع
-    // ========================================================
 
     document
         .getElementById("huntingToggle")
@@ -385,10 +407,6 @@
         );
 
 
-    // ========================================================
-    // فیلتر مناطق چهارگانه
-    // ========================================================
-
     document
         .getElementById("protectedToggle")
         .addEventListener(
@@ -409,74 +427,6 @@
             }
         );
 
-
-    // ========================================================
-    // بارگذاری FWI با BBOX واقعی
-    // ========================================================
-
-    async function loadFWI() {
-
-        const metadataResponse = await fetch(
-            "data/fwi/metadata.json?v=2"
-        );
-
-        if (!metadataResponse.ok) {
-            throw new Error(
-                "metadata.json پیدا نشد."
-            );
-        }
-
-        const metadata =
-            await metadataResponse.json();
-
-        const bbox = metadata.bbox;
-
-        const bounds = [
-            [
-                bbox.south,
-                bbox.west
-            ],
-            [
-                bbox.north,
-                bbox.east
-            ]
-        ];
-
-        const imageUrl =
-            "data/fwi/" +
-            metadata.output +
-            "?v=2";
-
-        const fwiLayer =
-            L.imageOverlay(
-                imageUrl,
-                bounds,
-                {
-                    opacity: 0.85,
-                    interactive: false
-                }
-            );
-
-        fwiLayer.addTo(map);
-
-        // نقشه را با محدوده واقعی FWI هماهنگ می‌کنیم
-        map.fitBounds(
-            bounds,
-            {
-                padding: [
-                    20,
-                    20
-                ]
-            }
-        );
-
-        return fwiLayer;
-    }
-
-
-    // ========================================================
-    // شروع
-    // ========================================================
 
     async function initializeMap() {
 
