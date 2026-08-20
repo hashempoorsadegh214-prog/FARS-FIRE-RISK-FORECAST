@@ -12,40 +12,25 @@
     >
 
     <style>
-
-        /* =====================================================
-           فونت اصلی
-           ===================================================== */
-
         * {
             box-sizing: border-box;
         }
 
-        html,
         body {
             margin: 0;
-            padding: 0;
+            background: #eef1f4;
+            color: #222;
             font-family:
                 "B Nazanin",
                 "BNazanin",
-                "B Nazanin Outline",
                 Tahoma,
                 Arial,
                 sans-serif;
         }
 
-        body {
-            background: #eef1f4;
-            color: #222;
-        }
-
-        /* =====================================================
-           سربرگ
-           ===================================================== */
-
         header {
             background: #e85d04;
-            color: white;
+            color: #fff;
             text-align: center;
             padding: 16px 10px;
         }
@@ -56,10 +41,6 @@
             font-weight: bold;
         }
 
-        /* =====================================================
-           محفظه اصلی
-           ===================================================== */
-
         .container {
             width: 100%;
             max-width: 1350px;
@@ -68,16 +49,11 @@
         }
 
         .card {
-            background: white;
+            background: #fff;
             border-radius: 14px;
             padding: 14px;
-            box-shadow:
-                0 2px 12px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
         }
-
-        /* =====================================================
-           عنوان
-           ===================================================== */
 
         .title {
             text-align: center;
@@ -86,9 +62,9 @@
             margin-bottom: 12px;
         }
 
-        /* =====================================================
-           راهنما - بالای نقشه
-           ===================================================== */
+        /* =========================
+           راهنما
+           ========================= */
 
         .legend-panel {
             margin-bottom: 12px;
@@ -107,14 +83,13 @@
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            align-items: center;
         }
 
         .legend-item {
             display: flex;
             align-items: center;
             gap: 6px;
-            background: white;
+            background: #fff;
             padding: 6px 10px;
             border-radius: 7px;
             font-size: 17px;
@@ -143,17 +118,17 @@
             background: #e67e22;
         }
 
-        .severe {
+        .extreme {
             background: #e74c3c;
         }
 
-        .extreme {
+        .very-extreme {
             background: #8e44ad;
         }
 
-        /* =====================================================
-           بخش اصلی: نقشه + فیلترها
-           ===================================================== */
+        /* =========================
+           نقشه + فیلتر
+           ========================= */
 
         .main-layout {
             display: grid;
@@ -162,24 +137,12 @@
             align-items: stretch;
         }
 
-        /* =====================================================
-           نقشه
-           ===================================================== */
-
-        .map-panel {
-            min-width: 0;
-        }
-
         #map {
             width: 100%;
             height: 650px;
             border-radius: 10px;
             overflow: hidden;
         }
-
-        /* =====================================================
-           پنل فیلترهای مکانی کنار نقشه
-           ===================================================== */
 
         .filters-panel {
             background: #f7f7f7;
@@ -194,40 +157,58 @@
             margin: 14px 0;
             font-size: 18px;
             cursor: pointer;
-            line-height: 1.5;
         }
 
         .filter-item input {
             width: 20px;
             height: 20px;
             cursor: pointer;
-            flex-shrink: 0;
         }
-
-        .filter-description {
-            margin-top: 14px;
-            padding-top: 12px;
-            border-top: 1px solid #ddd;
-            font-size: 15px;
-            line-height: 1.8;
-            color: #666;
-        }
-
-        /* =====================================================
-           وضعیت
-           ===================================================== */
 
         #status {
             margin-top: 10px;
-            padding: 8px;
             text-align: center;
             font-size: 16px;
             color: #666;
         }
 
-        /* =====================================================
-           موبایل
-           ===================================================== */
+        /* =========================
+           پاپ‌آپ
+           ========================= */
+
+        .popup-box {
+            min-width: 220px;
+            font-family:
+                "B Nazanin",
+                "BNazanin",
+                Tahoma,
+                Arial,
+                sans-serif;
+        }
+
+        .popup-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .popup-row {
+            margin: 5px 0;
+            font-size: 17px;
+        }
+
+        .popup-label {
+            font-weight: bold;
+        }
+
+        .risk-value {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 6px 10px;
+            border-radius: 7px;
+            background: #f1f1f1;
+            font-weight: bold;
+        }
 
         @media (max-width: 850px) {
 
@@ -243,19 +224,14 @@
                 grid-template-columns: 1fr;
             }
 
-            .filters-panel {
-                order: 2;
-            }
-
             #map {
                 height: 520px;
             }
 
-            .legend-item {
-                font-size: 16px;
+            .filters-panel {
+                order: 2;
             }
         }
-
     </style>
 </head>
 
@@ -275,9 +251,7 @@
             پیش‌بینی خطر حریق برای فردا
         </div>
 
-        <!-- =================================================
-             راهنمای رنگ‌ها
-             ================================================= -->
+        <!-- راهنما -->
 
         <div class="legend-panel">
 
@@ -308,12 +282,12 @@
                 </div>
 
                 <div class="legend-item">
-                    <span class="color severe"></span>
+                    <span class="color extreme"></span>
                     شدید
                 </div>
 
                 <div class="legend-item">
-                    <span class="color extreme"></span>
+                    <span class="color very-extreme"></span>
                     بسیار شدید
                 </div>
 
@@ -321,21 +295,11 @@
 
         </div>
 
-        <!-- =================================================
-             نقشه + فیلترها
-             ================================================= -->
+        <!-- نقشه + فیلترها -->
 
         <div class="main-layout">
 
-            <!-- نقشه -->
-
-            <div class="map-panel">
-
-                <div id="map"></div>
-
-            </div>
-
-            <!-- فیلترهای مکانی -->
+            <div id="map"></div>
 
             <div class="filters-panel">
 
@@ -344,57 +308,42 @@
                 </div>
 
                 <label class="filter-item">
-
                     <input
                         type="checkbox"
                         id="huntingToggle"
                     >
-
-                    <span>
-                        مناطق شکار ممنوع
-                    </span>
-
+                    <span>مناطق شکار ممنوع</span>
                 </label>
 
                 <label class="filter-item">
-
                     <input
                         type="checkbox"
                         id="protectedToggle"
                     >
-
-                    <span>
-                        مناطق چهارگانه
-                    </span>
-
+                    <span>مناطق چهارگانه</span>
                 </label>
-
-                <div class="filter-description">
-
-                    برای نمایش هر لایه،
-                    تیک مربوط به آن را فعال کنید.
-
-                </div>
 
             </div>
 
         </div>
 
         <div id="status">
-            در حال بارگذاری نقشه...
+            در حال بارگذاری...
         </div>
 
     </div>
 
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+</script>
 
 <script>
 
-    // ========================================================
-    // ساخت نقشه
-    // ========================================================
+    /* ========================================================
+       نقشه
+       ======================================================== */
 
     const map = L.map("map");
 
@@ -402,11 +351,6 @@
         [29.6, 52.5],
         7
     );
-
-
-    // ========================================================
-    // نقشه پایه
-    // ========================================================
 
     L.tileLayer(
         "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -417,17 +361,17 @@
     ).addTo(map);
 
 
-    // ========================================================
-    // متغیر لایه‌ها
-    // ========================================================
+    /* ========================================================
+       متغیر لایه‌ها
+       ======================================================== */
 
     let huntingLayer = null;
     let protectedLayer = null;
 
 
-    // ========================================================
-    // استایل مناطق شکار ممنوع
-    // ========================================================
+    /* ========================================================
+       استایل شکار ممنوع
+       ======================================================== */
 
     function huntingStyle() {
 
@@ -440,9 +384,9 @@
     }
 
 
-    // ========================================================
-    // استایل مناطق چهارگانه
-    // ========================================================
+    /* ========================================================
+       استایل مناطق چهارگانه
+       ======================================================== */
 
     function protectedStyle() {
 
@@ -455,18 +399,303 @@
     }
 
 
-    // ========================================================
-    // بارگذاری FWI
-    // ========================================================
+    /* ========================================================
+       تعیین سطح خطر بر اساس FWI
+       ======================================================== */
+
+    function getRiskClass(fwi) {
+
+        if (fwi === null || fwi === undefined) {
+            return {
+                name: "نامشخص",
+                color: "#999"
+            };
+        }
+
+        if (fwi < 11.2) {
+            return {
+                name: "کم",
+                color: "#2ecc71"
+            };
+        }
+
+        if (fwi < 21.3) {
+            return {
+                name: "متوسط",
+                color: "#f1c40f"
+            };
+        }
+
+        if (fwi < 38) {
+            return {
+                name: "زیاد",
+                color: "#f39c12"
+            };
+        }
+
+        if (fwi < 50) {
+            return {
+                name: "خیلی زیاد",
+                color: "#e67e22"
+            };
+        }
+
+        if (fwi <= 70) {
+            return {
+                name: "شدید",
+                color: "#e74c3c"
+            };
+        }
+
+        return {
+            name: "بسیار شدید",
+            color: "#8e44ad"
+        };
+    }
+
+
+    /* ========================================================
+       پاپ‌آپ منطقه
+       ======================================================== */
+
+    function createPopup(
+        feature,
+        regionType
+    ) {
+
+        const properties =
+            feature.properties || {};
+
+        /*
+         * نام منطقه:
+         * چند نام متداول را بررسی می‌کنیم تا
+         * لازم نباشد ساختار GeoJSON را تغییر بدهیم.
+         */
+
+        const regionName =
+            properties.name ||
+            properties.NAME ||
+            properties.Name ||
+            properties.title ||
+            properties.Title ||
+            properties.region ||
+            properties.REGION ||
+            "نام منطقه ثبت نشده";
+
+        /*
+         * چون PNG فعلی عدد FWI ندارد،
+         * فعلاً مقدار FWI را null می‌گذاریم.
+         */
+
+        const fwiValue = null;
+
+        const risk =
+            getRiskClass(
+                fwiValue
+            );
+
+        const popup = `
+            <div class="popup-box">
+
+                <div class="popup-title">
+                    ${regionName}
+                </div>
+
+                <div class="popup-row">
+                    <span class="popup-label">
+                        نوع منطقه:
+                    </span>
+                    ${regionType}
+                </div>
+
+                <div class="popup-row">
+                    <span class="popup-label">
+                        سطح خطر حریق:
+                    </span>
+
+                    <span
+                        class="risk-value"
+                        style="color:${risk.color};"
+                    >
+                        ${risk.name}
+                    </span>
+                </div>
+
+                <div class="popup-row">
+                    <span class="popup-label">
+                        درصد سطح در معرض خطر:
+                    </span>
+                    در انتظار داده عددی FWI
+                </div>
+
+            </div>
+        `;
+
+        return popup;
+    }
+
+
+    /* ========================================================
+       بارگذاری مناطق شکار ممنوع
+       ======================================================== */
+
+    async function loadHunting() {
+
+        const response =
+            await fetch(
+                "hunting_banned.geojson?v=" +
+                Date.now()
+            );
+
+        if (!response.ok) {
+            throw new Error(
+                "فایل مناطق شکار ممنوع پیدا نشد."
+            );
+        }
+
+        const data =
+            await response.json();
+
+        huntingLayer =
+            L.geoJSON(
+                data,
+                {
+
+                    style:
+                        huntingStyle,
+
+                    onEachFeature:
+                        function(
+                            feature,
+                            layer
+                        ) {
+
+                            layer.bindPopup(
+                                createPopup(
+                                    feature,
+                                    "منطقه شکار ممنوع"
+                                )
+                            );
+                        }
+                }
+            );
+    }
+
+
+    /* ========================================================
+       بارگذاری مناطق چهارگانه
+       ======================================================== */
+
+    async function loadProtected() {
+
+        const response =
+            await fetch(
+                "protected_areas.geojson?v=" +
+                Date.now()
+            );
+
+        if (!response.ok) {
+            throw new Error(
+                "فایل مناطق چهارگانه پیدا نشد."
+            );
+        }
+
+        const data =
+            await response.json();
+
+        protectedLayer =
+            L.geoJSON(
+                data,
+                {
+
+                    style:
+                        protectedStyle,
+
+                    onEachFeature:
+                        function(
+                            feature,
+                            layer
+                        ) {
+
+                            layer.bindPopup(
+                                createPopup(
+                                    feature,
+                                    "منطقه چهارگانه"
+                                )
+                            );
+                        }
+                }
+            );
+    }
+
+
+    /* ========================================================
+       فیلتر شکار ممنوع
+       ======================================================== */
+
+    document
+        .getElementById(
+            "huntingToggle"
+        )
+        .addEventListener(
+            "change",
+            function() {
+
+                if (!huntingLayer) {
+                    return;
+                }
+
+                if (this.checked) {
+                    huntingLayer.addTo(map);
+                } else {
+                    map.removeLayer(
+                        huntingLayer
+                    );
+                }
+            }
+        );
+
+
+    /* ========================================================
+       فیلتر مناطق چهارگانه
+       ======================================================== */
+
+    document
+        .getElementById(
+            "protectedToggle"
+        )
+        .addEventListener(
+            "change",
+            function() {
+
+                if (!protectedLayer) {
+                    return;
+                }
+
+                if (this.checked) {
+                    protectedLayer.addTo(map);
+                } else {
+                    map.removeLayer(
+                        protectedLayer
+                    );
+                }
+            }
+        );
+
+
+    /* ========================================================
+       FWI
+       ======================================================== */
 
     async function loadFWI() {
 
-        const response = await fetch(
-            "data/fwi/metadata.json?v=" + Date.now()
-        );
+        const response =
+            await fetch(
+                "data/fwi/metadata.json?v=" +
+                Date.now()
+            );
 
         if (!response.ok) {
-
             throw new Error(
                 "metadata.json پیدا نشد."
             );
@@ -498,15 +727,13 @@
             "?v=" +
             Date.now();
 
-        const fwiLayer =
-            L.imageOverlay(
-                imageUrl,
-                bounds,
-                {
-                    opacity: 0.85,
-                    interactive: false
-                }
-            ).addTo(map);
+        L.imageOverlay(
+            imageUrl,
+            bounds,
+            {
+                opacity: 0.85
+            }
+        ).addTo(map);
 
         map.fitBounds(
             bounds,
@@ -517,144 +744,12 @@
                 ]
             }
         );
-
-        return fwiLayer;
     }
 
 
-    // ========================================================
-    // مناطق شکار ممنوع
-    // ========================================================
-
-    async function loadHunting() {
-
-        const response =
-            await fetch(
-                "hunting_banned.geojson?v=" +
-                Date.now()
-            );
-
-        if (!response.ok) {
-
-            throw new Error(
-                "hunting_banned.geojson پیدا نشد."
-            );
-        }
-
-        const data =
-            await response.json();
-
-        huntingLayer =
-            L.geoJSON(
-                data,
-                {
-                    style:
-                        huntingStyle
-                }
-            );
-    }
-
-
-    // ========================================================
-    // مناطق چهارگانه
-    // ========================================================
-
-    async function loadProtected() {
-
-        const response =
-            await fetch(
-                "protected_areas.geojson?v=" +
-                Date.now()
-            );
-
-        if (!response.ok) {
-
-            throw new Error(
-                "protected_areas.geojson پیدا نشد."
-            );
-        }
-
-        const data =
-            await response.json();
-
-        protectedLayer =
-            L.geoJSON(
-                data,
-                {
-                    style:
-                        protectedStyle
-                }
-            );
-    }
-
-
-    // ========================================================
-    // فیلتر شکار ممنوع
-    // ========================================================
-
-    document
-        .getElementById(
-            "huntingToggle"
-        )
-        .addEventListener(
-            "change",
-            function () {
-
-                if (!huntingLayer) {
-                    return;
-                }
-
-                if (this.checked) {
-
-                    huntingLayer.addTo(
-                        map
-                    );
-
-                } else {
-
-                    map.removeLayer(
-                        huntingLayer
-                    );
-                }
-            }
-        );
-
-
-    // ========================================================
-    // فیلتر مناطق چهارگانه
-    // ========================================================
-
-    document
-        .getElementById(
-            "protectedToggle"
-        )
-        .addEventListener(
-            "change",
-            function () {
-
-                if (!protectedLayer) {
-                    return;
-                }
-
-                if (this.checked) {
-
-                    protectedLayer.addTo(
-                        map
-                    );
-
-                } else {
-
-                    map.removeLayer(
-                        protectedLayer
-                    );
-                }
-            }
-        );
-
-
-    // ========================================================
-    // راه‌اندازی
-    // ========================================================
+    /* ========================================================
+       شروع
+       ======================================================== */
 
     async function initializeMap() {
 
@@ -670,22 +765,16 @@
             );
 
             document
-                .getElementById(
-                    "status"
-                )
+                .getElementById("status")
                 .textContent =
                 "نقشه و لایه‌های مکانی آماده هستند.";
 
         } catch (error) {
 
-            console.error(
-                error
-            );
+            console.error(error);
 
             document
-                .getElementById(
-                    "status"
-                )
+                .getElementById("status")
                 .textContent =
                 error.message;
         }
