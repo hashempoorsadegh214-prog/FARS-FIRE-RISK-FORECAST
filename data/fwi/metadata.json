@@ -5,7 +5,7 @@
   "model": "ECMWF",
   "forecast_type": "1 day forecast",
   "forecast_date": "2026-08-21",
-  "generated_at_utc": "2026-08-20T10:34:20.950395+00:00",
+  "generated_at_utc": "2026-08-20T10:41:16.984704+00:00",
   "boundary": "fars.geojson",
   "bbox": "50.0,27.0,54.5,31.5",
   "output": "fwi_2026-08-21.png"
