@@ -22,9 +22,9 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests
+          pip install Pillow
 
-      - name: Download FWI forecast
+      - name: Download and process FWI
         run: |
           python scripts/update_fwi.py
 
