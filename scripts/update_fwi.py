@@ -14,13 +14,16 @@ OUTPUT_DIR = "data/fwi"
 WMS_URL = "https://maps.effis.emergency.copernicus.eu/gwis"
 LAYER = "ecmwf.fwi"
 
-# محدوده پوشاننده استان فارس
+# محدوده تقریبی استان فارس
 BBOX = "50.0,27.0,54.5,31.5"
 
+# اندازه نقشه
 WIDTH = 1000
 HEIGHT = 700
 
-FORECAST_DAYS = 9
+# فقط پیش بینی یک روز آینده
+FORECAST_DAYS = 1
+
 MAX_RETRIES = 5
 
 
@@ -65,7 +68,48 @@ def check_fars_boundary():
 
 
 # ============================================================
-# ساخت URL
+# پاک کردن خروجی های قبلی
+# ============================================================
+
+def clean_old_fwi_files():
+
+    print("")
+    print("=" * 70)
+    print("Cleaning old FWI files")
+    print("=" * 70)
+
+    if not os.path.exists(OUTPUT_DIR):
+        os.makedirs(
+            OUTPUT_DIR,
+            exist_ok=True
+        )
+        return
+
+    for filename in os.listdir(OUTPUT_DIR):
+
+        if filename.startswith("fwi_") and filename.endswith(".png"):
+
+            file_path = os.path.join(
+                OUTPUT_DIR,
+                filename
+            )
+
+            try:
+                os.remove(file_path)
+
+                print(
+                    f"Removed old file: {filename}"
+                )
+
+            except Exception as e:
+
+                print(
+                    f"Could not remove {filename}: {e}"
+                )
+
+
+# ============================================================
+# ساخت URL WMS
 # ============================================================
 
 def build_url(date_str):
@@ -95,7 +139,7 @@ def build_url(date_str):
 
 
 # ============================================================
-# دانلود نقشه FWI
+# دانلود FWI فردا
 # ============================================================
 
 def download_fwi(date_str, output_file):
@@ -104,7 +148,9 @@ def download_fwi(date_str, output_file):
 
     print("")
     print("=" * 70)
-    print(f"Downloading FWI map for {date_str}")
+    print(
+        f"Downloading FWI forecast for: {date_str}"
+    )
     print("=" * 70)
 
     temp_file = output_file + ".part"
@@ -119,7 +165,11 @@ def download_fwi(date_str, output_file):
         )
 
         if os.path.exists(temp_file):
-            os.remove(temp_file)
+
+            try:
+                os.remove(temp_file)
+            except Exception:
+                pass
 
         command = [
             "curl",
@@ -127,8 +177,7 @@ def download_fwi(date_str, output_file):
             "--fail",
             "--location",
 
-            # بسیار مهم:
-            # جلوگیری از خطاهای HTTP/2
+            # جلوگیری از مشکلات HTTP/2
             "--http1.1",
 
             "--silent",
@@ -182,10 +231,11 @@ def download_fwi(date_str, output_file):
                     continue
 
                 raise RuntimeError(
-                    f"Unable to download FWI map for {date_str}"
+                    f"Unable to download FWI forecast for {date_str}"
                 )
 
             if not os.path.exists(temp_file):
+
                 raise RuntimeError(
                     "Output file was not created."
                 )
@@ -198,13 +248,14 @@ def download_fwi(date_str, output_file):
                 f"Downloaded bytes: {file_size}"
             )
 
-            # بررسی حداقل اندازه
+            # بررسی اندازه فایل
             if file_size < 1000:
 
                 with open(
                     temp_file,
                     "rb"
                 ) as f:
+
                     preview = f.read(3000)
 
                 print(
@@ -228,6 +279,7 @@ def download_fwi(date_str, output_file):
                 temp_file,
                 "rb"
             ) as f:
+
                 header = f.read(8)
 
             png_signature = (
@@ -240,6 +292,7 @@ def download_fwi(date_str, output_file):
                     temp_file,
                     "rb"
                 ) as f:
+
                     preview = f.read(3000)
 
                 print(
@@ -262,6 +315,7 @@ def download_fwi(date_str, output_file):
                 output_file
             )
 
+            print("")
             print(
                 f"Saved successfully: {output_file}"
             )
@@ -274,23 +328,23 @@ def download_fwi(date_str, output_file):
             print(
                 f"Attempt {attempt} failed:"
             )
+
             print(
                 str(e)
             )
 
             if os.path.exists(temp_file):
+
                 try:
                     os.remove(temp_file)
                 except Exception:
                     pass
 
             if attempt < MAX_RETRIES:
+
                 print(
                     "Retrying..."
                 )
-                continue
-
-            raise
 
 
 # ============================================================
@@ -301,56 +355,53 @@ def main():
 
     print("")
     print("=" * 70)
-    print("FARS FIRE RISK - FWI FORECAST ENGINE")
+    print("FARS FIRE RISK - ONE DAY FWI FORECAST")
     print("=" * 70)
 
+    # بررسی مرز
     check_fars_boundary()
 
+    # ساخت پوشه
     os.makedirs(
         OUTPUT_DIR,
         exist_ok=True
     )
 
+    # حذف خروجی های قدیمی
+    clean_old_fwi_files()
+
+    # تاریخ امروز UTC
     today = datetime.now(
         timezone.utc
     ).date()
 
-    files = []
+    # --------------------------------------------------------
+    # مهم:
+    # پیش بینی یک روز آینده = فردا
+    # --------------------------------------------------------
 
-    for day_ahead in range(
-        FORECAST_DAYS
-    ):
+    forecast_date = (
+        today + timedelta(days=1)
+    )
 
-        forecast_date = (
-            today
-            + timedelta(
-                days=day_ahead
-            )
-        )
+    date_str = (
+        forecast_date.isoformat()
+    )
 
-        date_str = (
-            forecast_date.isoformat()
-        )
+    output_file = os.path.join(
+        OUTPUT_DIR,
+        f"fwi_{date_str}.png"
+    )
 
-        output_file = os.path.join(
-            OUTPUT_DIR,
-            f"fwi_{date_str}.png"
-        )
+    # دریافت FWI فردا
+    download_fwi(
+        date_str,
+        output_file
+    )
 
-        download_fwi(
-            date_str,
-            output_file
-        )
-
-        files.append(
-            {
-                "date": date_str,
-                "day_ahead": day_ahead,
-                "file": (
-                    f"fwi_{date_str}.png"
-                ),
-            }
-        )
+    # --------------------------------------------------------
+    # metadata
+    # --------------------------------------------------------
 
     metadata = {
 
@@ -366,11 +417,16 @@ def main():
         "model":
             "ECMWF",
 
-        "output":
-            "PNG map",
+        "forecast_type":
+            "1 day forecast",
 
-        "forecast_days":
-            FORECAST_DAYS,
+        "forecast_date":
+            date_str,
+
+        "generated_at_utc":
+            datetime.now(
+                timezone.utc
+            ).isoformat(),
 
         "boundary":
             FARS_FILE,
@@ -378,13 +434,8 @@ def main():
         "bbox":
             BBOX,
 
-        "generated_at_utc":
-            datetime.now(
-                timezone.utc
-            ).isoformat(),
-
-        "files":
-            files,
+        "output":
+            f"fwi_{date_str}.png"
     }
 
     metadata_file = os.path.join(
@@ -407,13 +458,21 @@ def main():
 
     print("")
     print("=" * 70)
-    print("FWI UPDATE COMPLETED SUCCESSFULLY")
+    print("FWI ONE-DAY FORECAST COMPLETED")
     print("=" * 70)
 
     print(
-        f"Total forecast maps: {len(files)}"
+        f"Forecast date: {date_str}"
     )
 
+    print(
+        f"Output: {output_file}"
+    )
+
+
+# ============================================================
+# شروع
+# ============================================================
 
 if __name__ == "__main__":
     main()
