@@ -2,9 +2,17 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <title>پیش‌بینی خطر حریق فارس</title>
+    <title>سامانه پیش‌بینی خطر حریق فارس</title>
+
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    >
 
     <style>
         * {
@@ -15,6 +23,7 @@
             margin: 0;
             background: #eef1f4;
             font-family: Tahoma, Arial, sans-serif;
+            color: #222;
         }
 
         header {
@@ -31,7 +40,7 @@
 
         .container {
             width: 100%;
-            max-width: 1100px;
+            max-width: 1200px;
             margin: 20px auto;
             padding: 0 12px;
         }
@@ -50,34 +59,105 @@
             margin-bottom: 12px;
         }
 
-        .map-wrapper {
+        #map {
             width: 100%;
-            background: #dfe3e7;
+            height: 650px;
             border-radius: 10px;
             overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
 
-        .map-wrapper img {
-            display: block;
-            width: 100%;
-            height: auto;
-            object-fit: contain;
+        .panel {
+            margin-top: 14px;
+            padding: 14px;
+            background: #f7f7f7;
+            border-radius: 10px;
+        }
+
+        .panel-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .filter-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+
+        .filter-item input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .legend-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: white;
+            padding: 7px 9px;
+            border-radius: 7px;
+            font-size: 13px;
+        }
+
+        .color {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .low {
+            background: #2ecc71;
+        }
+
+        .moderate {
+            background: #f1c40f;
+        }
+
+        .high {
+            background: #f39c12;
+        }
+
+        .very-high {
+            background: #e67e22;
+        }
+
+        .severe {
+            background: #e74c3c;
+        }
+
+        .extreme {
+            background: #8e44ad;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 15px;
+            color: #666;
         }
 
         @media (max-width: 700px) {
+
             header h1 {
                 font-size: 18px;
             }
 
-            .title {
-                font-size: 16px;
+            #map {
+                height: 500px;
             }
 
-            .card {
-                padding: 8px;
+            .legend-items {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
             }
         }
     </style>
@@ -86,7 +166,9 @@
 <body>
 
 <header>
-    <h1>سامانه پیش‌بینی خطر حریق در عرصه‌های طبیعی استان فارس</h1>
+    <h1>
+        سامانه پیش‌بینی خطر حریق در عرصه‌های طبیعی استان فارس
+    </h1>
 </header>
 
 <div class="container">
@@ -97,18 +179,322 @@
             پیش‌بینی خطر حریق برای فردا
         </div>
 
-        <div class="map-wrapper">
+        <div id="map"></div>
 
-            <img
-                src="data/fwi/fwi_2026-08-21.png?v=5"
-                alt="نقشه پیش‌بینی FWI استان فارس"
-            >
+        <!-- فیلترهای مکانی -->
+        <div class="panel">
 
+            <div class="panel-title">
+                فیلترهای مکانی
+            </div>
+
+            <label class="filter-item">
+                <input
+                    type="checkbox"
+                    id="huntingToggle"
+                >
+                مناطق شکار ممنوع
+            </label>
+
+            <label class="filter-item">
+                <input
+                    type="checkbox"
+                    id="protectedToggle"
+                >
+                مناطق چهارگانه
+            </label>
+
+        </div>
+
+        <!-- راهنما -->
+        <div class="panel">
+
+            <div class="panel-title">
+                راهنمای سطوح خطر حریق
+            </div>
+
+            <div class="legend-items">
+
+                <div class="legend-item">
+                    <span class="color low"></span>
+                    کم
+                </div>
+
+                <div class="legend-item">
+                    <span class="color moderate"></span>
+                    متوسط
+                </div>
+
+                <div class="legend-item">
+                    <span class="color high"></span>
+                    زیاد
+                </div>
+
+                <div class="legend-item">
+                    <span class="color very-high"></span>
+                    خیلی زیاد
+                </div>
+
+                <div class="legend-item">
+                    <span class="color severe"></span>
+                    شدید
+                </div>
+
+                <div class="legend-item">
+                    <span class="color extreme"></span>
+                    بسیار شدید
+                </div>
+
+            </div>
+
+        </div>
+
+        <div
+            id="loading"
+            class="loading"
+        >
+            در حال بارگذاری لایه‌ها...
         </div>
 
     </div>
 
 </div>
+
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+</script>
+
+<script>
+
+    // ========================================================
+    // ساخت نقشه
+    // ========================================================
+
+    const map = L.map("map", {
+        zoomControl: true
+    });
+
+    map.setView(
+        [29.6, 52.5],
+        7
+    );
+
+
+    // ========================================================
+    // نقشه پایه
+    // ========================================================
+
+    L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+            maxZoom: 18,
+            attribution: "&copy; OpenStreetMap"
+        }
+    ).addTo(map);
+
+
+    // ========================================================
+    // لایه FWI
+    // ========================================================
+
+    const fwiUrl =
+        "data/fwi/fwi_2026-08-21.png?v=7";
+
+    const fwiBounds = [
+        [27.0, 50.0],
+        [31.5, 54.5]
+    ];
+
+    const fwiLayer = L.imageOverlay(
+        fwiUrl,
+        fwiBounds,
+        {
+            opacity: 0.85,
+            interactive: false
+        }
+    ).addTo(map);
+
+
+    // ========================================================
+    // متغیرهای لایه‌های مکانی
+    // ========================================================
+
+    let huntingLayer = null;
+    let protectedLayer = null;
+
+
+    // ========================================================
+    // استایل مناطق شکار ممنوع
+    // ========================================================
+
+    function huntingStyle() {
+
+        return {
+            color: "#8e44ad",
+            weight: 2,
+            fillColor: "#9b59b6",
+            fillOpacity: 0.18
+        };
+    }
+
+
+    // ========================================================
+    // استایل مناطق چهارگانه
+    // ========================================================
+
+    function protectedStyle() {
+
+        return {
+            color: "#16a085",
+            weight: 2,
+            fillColor: "#1abc9c",
+            fillOpacity: 0.18
+        };
+    }
+
+
+    // ========================================================
+    // بارگذاری مناطق شکار ممنوع
+    // ========================================================
+
+    async function loadHunting() {
+
+        const response = await fetch(
+            "hunting_banned.geojson"
+        );
+
+        if (!response.ok) {
+            throw new Error(
+                "hunting_banned.geojson not found"
+            );
+        }
+
+        const data = await response.json();
+
+        huntingLayer = L.geoJSON(
+            data,
+            {
+                style: huntingStyle
+            }
+        );
+    }
+
+
+    // ========================================================
+    // بارگذاری مناطق چهارگانه
+    // ========================================================
+
+    async function loadProtected() {
+
+        const response = await fetch(
+            "protected_areas.geojson"
+        );
+
+        if (!response.ok) {
+            throw new Error(
+                "protected_areas.geojson not found"
+            );
+        }
+
+        const data = await response.json();
+
+        protectedLayer = L.geoJSON(
+            data,
+            {
+                style: protectedStyle
+            }
+        );
+    }
+
+
+    // ========================================================
+    // فیلتر شکار ممنوع
+    // ========================================================
+
+    document
+        .getElementById("huntingToggle")
+        .addEventListener(
+            "change",
+            function () {
+
+                if (!huntingLayer) {
+                    return;
+                }
+
+                if (this.checked) {
+
+                    huntingLayer.addTo(map);
+
+                } else {
+
+                    map.removeLayer(
+                        huntingLayer
+                    );
+                }
+            }
+        );
+
+
+    // ========================================================
+    // فیلتر مناطق چهارگانه
+    // ========================================================
+
+    document
+        .getElementById("protectedToggle")
+        .addEventListener(
+            "change",
+            function () {
+
+                if (!protectedLayer) {
+                    return;
+                }
+
+                if (this.checked) {
+
+                    protectedLayer.addTo(map);
+
+                } else {
+
+                    map.removeLayer(
+                        protectedLayer
+                    );
+                }
+            }
+        );
+
+
+    // ========================================================
+    // بارگذاری همه داده‌ها
+    // ========================================================
+
+    async function initializeMap() {
+
+        try {
+
+            await Promise.all([
+                loadHunting(),
+                loadProtected()
+            ]);
+
+            document
+                .getElementById("loading")
+                .style.display = "none";
+
+        } catch (error) {
+
+            console.error(error);
+
+            document
+                .getElementById("loading")
+                .textContent =
+                "برخی لایه‌های مکانی در دسترس نیستند.";
+        }
+    }
+
+
+    initializeMap();
+
+</script>
 
 </body>
 </html>
